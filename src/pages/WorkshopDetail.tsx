@@ -1,21 +1,26 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import WorkshopRegistrationModal from '../components/WorkshopRegistrationModal';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import { useAuth } from '../contexts/AuthContext';
-import { Calendar, MapPin, IndianRupee, Users, Clock, Star, User, Building } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
+import { Calendar, MapPin, IndianRupee, Users, Clock, Star, User, Building, ArrowLeft } from 'lucide-react';
 
 const WorkshopDetail = () => {
   const { id } = useParams();
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [selectedWorkshop, setSelectedWorkshop] = useState(null);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
-  // Mock workshop data - in real app, this would come from API
+  // Mock workshop data - in real app, this would come from API based on ID
   const workshop = {
-    id: 1,
+    id: parseInt(id || '1'),
     title: "Advanced React Development",
     company: "TechCorp Solutions",
     price: 2500,
@@ -32,6 +37,7 @@ const WorkshopDetail = () => {
     date: "15 Jan 2025",
     time: "10:00 AM - 6:00 PM",
     registrationDeadline: "10 Jan 2025",
+    registrationMode: "automated",
     instructor: {
       name: "Rahul Sharma",
       designation: "Senior React Developer",
@@ -65,11 +71,32 @@ const WorkshopDetail = () => {
     ]
   };
 
+  const handleWorkshopRegistration = (workshopId: number, registrationData: any) => {
+    console.log('Registration data:', registrationData);
+    toast({
+      title: workshop.registrationMode === 'automated' ? "Registration Successful! 🎉" : "Request Submitted! 📋",
+      description: workshop.registrationMode === 'automated' 
+        ? "Workshop has been added to your dashboard!" 
+        : "Your registration request is pending approval.",
+    });
+    setShowRegistrationModal(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navigation />
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Link to="/workshops">
+            <Button variant="outline" className="flex items-center space-x-2">
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Workshops</span>
+            </Button>
+          </Link>
+        </div>
+
         {/* Workshop Header */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
           <div className="relative">
@@ -86,6 +113,9 @@ const WorkshopDetail = () => {
               )}
               <Badge variant="secondary" className="bg-white/90 text-gray-700 text-lg px-4 py-2">
                 {workshop.mode}
+              </Badge>
+              <Badge variant={workshop.registrationMode === 'automated' ? 'default' : 'secondary'} className="text-lg px-4 py-2">
+                {workshop.registrationMode === 'automated' ? 'Instant' : 'Manual Approval'}
               </Badge>
             </div>
             <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm rounded-xl p-3">
@@ -149,7 +179,7 @@ const WorkshopDetail = () => {
 
               {/* Registration Card */}
               <div className="lg:col-span-1">
-                <Card className="border-0 shadow-xl">
+                <Card className="border-0 shadow-xl sticky top-8">
                   <CardContent className="p-6 space-y-4">
                     <div className="text-center">
                       {workshop.isFree ? (
@@ -181,11 +211,16 @@ const WorkshopDetail = () => {
                     </div>
 
                     {isAuthenticated ? (
-                      <Link to={`/workshop/${workshop.id}/register`} className="block">
-                        <Button className="w-full bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 text-white py-3 text-lg font-semibold">
-                          Register Now
-                        </Button>
-                      </Link>
+                      <Button 
+                        className="w-full bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 text-white py-3 text-lg font-semibold"
+                        onClick={() => {
+                          setSelectedWorkshop(workshop);
+                          setShowRegistrationModal(true);
+                        }}
+                        disabled={workshop.seats <= workshop.bookedSeats}
+                      >
+                        {workshop.seats <= workshop.bookedSeats ? 'Fully Booked' : 'Register Now'}
+                      </Button>
                     ) : (
                       <div className="space-y-3">
                         <Link to="/login" className="block">
@@ -259,7 +294,7 @@ const WorkshopDetail = () => {
 
           {/* Instructor */}
           <div className="lg:col-span-1">
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg sticky top-8">
               <CardContent className="p-6">
                 <h2 className="text-xl font-display font-bold text-gray-900 mb-4">
                   Your Instructor
@@ -293,6 +328,13 @@ const WorkshopDetail = () => {
           </div>
         </div>
       </div>
+
+      <WorkshopRegistrationModal
+        workshop={selectedWorkshop}
+        isOpen={showRegistrationModal}
+        onClose={() => setShowRegistrationModal(false)}
+        onRegister={handleWorkshopRegistration}
+      />
 
       <Footer />
     </div>

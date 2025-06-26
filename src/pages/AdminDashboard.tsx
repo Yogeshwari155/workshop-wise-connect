@@ -25,6 +25,24 @@ import {
 const AdminDashboard = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [pendingRegistrations, setPendingRegistrations] = useState([
+    {
+      id: 1,
+      user: "Priya Sharma",
+      workshop: "Advanced React Development",
+      reason: "I want to enhance my React skills for my current project at work...",
+      submittedAt: "2 hours ago",
+      status: "pending"
+    },
+    {
+      id: 2,
+      user: "Rajesh Kumar",
+      workshop: "Digital Marketing Masterclass",
+      reason: "Looking to transition into digital marketing and need foundational knowledge...",
+      submittedAt: "5 hours ago",
+      status: "pending"
+    }
+  ]);
 
   const stats = [
     { label: "Total Users", value: "2,543", icon: Users, color: "text-blue-600" },
@@ -66,23 +84,6 @@ const AdminDashboard = () => {
     }
   ];
 
-  const pendingRegistrations = [
-    {
-      id: 1,
-      user: "Priya Sharma",
-      workshop: "Advanced React Development",
-      reason: "I want to enhance my React skills for my current project at work...",
-      submittedAt: "2 hours ago"
-    },
-    {
-      id: 2,
-      user: "Rajesh Kumar",
-      workshop: "Digital Marketing Masterclass",
-      reason: "Looking to transition into digital marketing and need foundational knowledge...",
-      submittedAt: "5 hours ago"
-    }
-  ];
-
   const enterprises = [
     {
       id: 1,
@@ -102,7 +103,39 @@ const AdminDashboard = () => {
     }
   ];
 
+  const users = [
+    {
+      id: 1,
+      name: "Priya Sharma",
+      email: "priya@example.com",
+      role: "user",
+      joinedAt: "Jan 2025",
+      workshopsAttended: 3
+    },
+    {
+      id: 2,
+      name: "Rajesh Kumar",
+      email: "rajesh@example.com",
+      role: "user",
+      joinedAt: "Dec 2024",
+      workshopsAttended: 2
+    },
+    {
+      id: 3,
+      name: "TechCorp Solutions",
+      email: "contact@techcorp.com",
+      role: "enterprise",
+      joinedAt: "Dec 2024",
+      workshopsHosted: 5
+    }
+  ];
+
   const handleApproveRegistration = (id: number) => {
+    setPendingRegistrations(prev => 
+      prev.map(reg => 
+        reg.id === id ? { ...reg, status: 'approved' } : reg
+      )
+    );
     toast({
       title: "Registration Approved ✅",
       description: "User has been notified of the approval.",
@@ -110,10 +143,33 @@ const AdminDashboard = () => {
   };
 
   const handleRejectRegistration = (id: number) => {
+    setPendingRegistrations(prev => 
+      prev.map(reg => 
+        reg.id === id ? { ...reg, status: 'rejected' } : reg
+      )
+    );
     toast({
       title: "Registration Rejected ❌",
       description: "User has been notified of the rejection.",
     });
+  };
+
+  const handleDeleteUser = (userId: number) => {
+    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      toast({
+        title: "User Deleted",
+        description: "User account has been permanently removed.",
+      });
+    }
+  };
+
+  const handleDeleteWorkshop = (workshopId: number) => {
+    if (window.confirm('Are you sure you want to delete this workshop? This action cannot be undone.')) {
+      toast({
+        title: "Workshop Deleted",
+        description: "Workshop has been permanently removed.",
+      });
+    }
   };
 
   return (
@@ -149,13 +205,74 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="workshops" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="workshops">Workshops</TabsTrigger>
+        <Tabs defaultValue="registrations" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="registrations">Pending Approvals</TabsTrigger>
-            <TabsTrigger value="enterprises">Enterprises</TabsTrigger>
+            <TabsTrigger value="workshops">Workshops</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="enterprises">Enterprises</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="registrations" className="space-y-6">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle>Registration Approval Panel</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingRegistrations.filter(r => r.status === 'pending').length === 0 ? (
+                  <div className="text-center py-8">
+                    <Check className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
+                    <p className="text-gray-600">No pending registrations to review.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingRegistrations.map((registration) => (
+                      <div key={registration.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{registration.user}</h3>
+                            <p className="text-gray-600">{registration.workshop}</p>
+                            <p className="text-sm text-gray-500">Submitted {registration.submittedAt}</p>
+                          </div>
+                          <div className="flex space-x-2">
+                            {registration.status === 'pending' ? (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  className="bg-green-500 hover:bg-green-600"
+                                  onClick={() => handleApproveRegistration(registration.id)}
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => handleRejectRegistration(registration.id)}
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  Reject
+                                </Button>
+                              </>
+                            ) : (
+                              <Badge variant={registration.status === 'approved' ? 'default' : 'destructive'}>
+                                {registration.status === 'approved' ? 'Approved' : 'Rejected'}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 rounded p-3">
+                          <p className="text-sm text-gray-700">{registration.reason}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="workshops" className="space-y-6">
             <Card className="border-0 shadow-lg">
@@ -207,7 +324,12 @@ const AdminDashboard = () => {
                             <Button variant="outline" size="sm">
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteWorkshop(workshop.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -229,54 +351,48 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="registrations" className="space-y-6">
+          <TabsContent value="users" className="space-y-6">
             <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle>Pending Registration Approvals</CardTitle>
+                <CardTitle>User Management</CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingRegistrations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Check className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
-                    <p className="text-gray-600">No pending registrations to review.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingRegistrations.map((registration) => (
-                      <div key={registration.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{registration.user}</h3>
-                            <p className="text-gray-600">{registration.workshop}</p>
-                            <p className="text-sm text-gray-500">Submitted {registration.submittedAt}</p>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              className="bg-green-500 hover:bg-green-600"
-                              onClick={() => handleApproveRegistration(registration.id)}
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="destructive"
-                              onClick={() => handleRejectRegistration(registration.id)}
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded p-3">
-                          <p className="text-sm text-gray-700">{registration.reason}</p>
+                <div className="space-y-4">
+                  {users.map((user) => (
+                    <div key={user.id} className="border rounded-lg p-4 flex justify-between items-center">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{user.name}</h3>
+                        <p className="text-gray-600">{user.email}</p>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                          <Badge variant="secondary">{user.role}</Badge>
+                          <span>📅 Joined {user.joinedAt}</span>
+                          {user.role === 'user' && (
+                            <span>📚 {user.workshopsAttended} workshops attended</span>
+                          )}
+                          {user.role === 'enterprise' && (
+                            <span>🏢 {user.workshopsHosted} workshops hosted</span>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -305,6 +421,16 @@ const AdminDashboard = () => {
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -313,16 +439,16 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
+          <TabsContent value="analytics" className="space-y-6">
             <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
+                <CardTitle>Platform Analytics</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">User Management</h3>
-                  <p className="text-gray-600">Detailed user management features coming soon.</p>
+                  <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Dashboard</h3>
+                  <p className="text-gray-600">Detailed analytics and insights coming soon.</p>
                 </div>
               </CardContent>
             </Card>

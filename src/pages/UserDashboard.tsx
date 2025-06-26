@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -19,6 +19,41 @@ const UserDashboard = () => {
   const { toast } = useToast();
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [registeredWorkshops, setRegisteredWorkshops] = useState([
+    {
+      id: 1,
+      title: "Advanced React Development",
+      company: "TechCorp Solutions",
+      date: "15 Jan 2025",
+      time: "10:00 AM",
+      mode: "Online",
+      status: "approved",
+      meetLink: "https://meet.google.com/abc-defg-hij",
+      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop"
+    },
+    {
+      id: 2,
+      title: "Digital Marketing Masterclass",
+      company: "Growth Academy",
+      date: "20 Jan 2025",
+      time: "2:00 PM",
+      mode: "Hybrid",
+      status: "pending",
+      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=300&h=200&fit=crop"
+    },
+    {
+      id: 3,
+      title: "Data Science Fundamentals",
+      company: "DataMinds Inc",
+      date: "10 Jan 2025",
+      time: "9:00 AM",
+      mode: "Offline",
+      location: "Bangalore",
+      status: "completed",
+      rating: 5,
+      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=300&h=200&fit=crop"
+    }
+  ]);
 
   // Mock available workshops for registration
   const availableWorkshops = [
@@ -85,55 +120,48 @@ const UserDashboard = () => {
     );
   }
 
-  // Enhanced registered workshops with meet links and status
-  const registeredWorkshops = [
-    {
-      id: 1,
-      title: "Advanced React Development",
-      company: "TechCorp Solutions",
-      date: "15 Jan 2025",
-      time: "10:00 AM",
-      mode: "Online",
-      status: "confirmed",
-      meetLink: "https://meet.google.com/abc-defg-hij",
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop"
-    },
-    {
-      id: 2,
-      title: "Digital Marketing Masterclass",
-      company: "Growth Academy",
-      date: "20 Jan 2025",
-      time: "2:00 PM",
-      mode: "Hybrid",
-      status: "pending",
-      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=300&h=200&fit=crop"
-    },
-    {
-      id: 3,
-      title: "Data Science Fundamentals",
-      company: "DataMinds Inc",
-      date: "10 Jan 2025",
-      time: "9:00 AM",
-      mode: "Offline",
-      location: "Bangalore",
-      status: "completed",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=300&h=200&fit=crop"
-    }
-  ];
-
   const handleWorkshopRegistration = (workshopId: number, registrationData: any) => {
     console.log('Registration data:', registrationData);
-    // In real app, this would call an API
+    
+    // Find the workshop being registered for
+    const workshop = availableWorkshops.find(w => w.id === workshopId);
+    if (!workshop) return;
+
+    // Create new registration entry with real-time status
+    const newRegistration = {
+      id: Date.now(), // Use timestamp as unique ID
+      title: workshop.title,
+      company: workshop.company,
+      date: workshop.date,
+      time: workshop.time,
+      mode: workshop.mode,
+      status: workshop.registrationMode === 'automated' ? 'approved' : 'pending',
+      meetLink: registrationData.meetLink || null,
+      image: workshop.image,
+      location: workshop.location
+    };
+
+    // Add to registered workshops - real-time update
+    setRegisteredWorkshops(prev => [...prev, newRegistration]);
     setShowRegistrationModal(false);
+
+    // Show success message
+    toast({
+      title: workshop.registrationMode === 'automated' ? "Registration Successful! 🎉" : "Request Submitted! 📋",
+      description: workshop.registrationMode === 'automated' 
+        ? "Workshop has been added to your dashboard!" 
+        : "Your registration request is pending approval.",
+    });
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed':
-        return <Badge className="bg-green-500 text-white">Confirmed</Badge>;
+      case 'approved':
+        return <Badge className="bg-green-500 text-white">Approved</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-500 text-white">Pending Approval</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500 text-white">Rejected</Badge>;
       case 'completed':
         return <Badge className="bg-blue-500 text-white">Completed</Badge>;
       default:
@@ -185,9 +213,9 @@ const UserDashboard = () => {
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6 text-center">
                   <div className="text-2xl font-bold text-green-600 mb-2">
-                    {registeredWorkshops.filter(w => w.status === 'confirmed').length}
+                    {registeredWorkshops.filter(w => w.status === 'approved').length}
                   </div>
-                  <div className="text-gray-600">Confirmed</div>
+                  <div className="text-gray-600">Approved</div>
                 </CardContent>
               </Card>
               <Card className="border-0 shadow-lg">
@@ -234,84 +262,96 @@ const UserDashboard = () => {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {registeredWorkshops.map((workshop) => (
-                    <Card key={workshop.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                      <CardContent className="p-0">
-                        <div className="flex">
-                          <img 
-                            src={workshop.image} 
-                            alt={workshop.title}
-                            className="w-24 h-24 object-cover rounded-l-lg"
-                          />
-                          <div className="flex-1 p-4 space-y-3">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h3 className="font-semibold text-gray-900">{workshop.title}</h3>
-                                <p className="text-sm text-gray-600">{workshop.company}</p>
+                    <Link key={workshop.id} to={`/workshop/${workshop.id}`}>
+                      <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+                        <CardContent className="p-0">
+                          <div className="flex">
+                            <img 
+                              src={workshop.image} 
+                              alt={workshop.title}
+                              className="w-24 h-24 object-cover rounded-l-lg"
+                            />
+                            <div className="flex-1 p-4 space-y-3">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h3 className="font-semibold text-gray-900">{workshop.title}</h3>
+                                  <p className="text-sm text-gray-600">{workshop.company}</p>
+                                </div>
+                                {getStatusBadge(workshop.status)}
                               </div>
-                              {getStatusBadge(workshop.status)}
-                            </div>
 
-                            <div className="flex items-center space-x-4 text-sm text-gray-600">
-                              <div className="flex items-center space-x-1">
-                                <Calendar className="h-4 w-4" />
-                                <span>{workshop.date}</span>
+                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                <div className="flex items-center space-x-1">
+                                  <Calendar className="h-4 w-4" />
+                                  <span>{workshop.date}</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <Clock className="h-4 w-4" />
+                                  <span>{workshop.time}</span>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-1">
-                                <Clock className="h-4 w-4" />
-                                <span>{workshop.time}</span>
-                              </div>
-                            </div>
 
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2 text-sm">
-                                <Badge variant="secondary">{workshop.mode}</Badge>
-                                {workshop.location && (
-                                  <div className="flex items-center space-x-1 text-gray-600">
-                                    <MapPin className="h-3 w-3" />
-                                    <span>{workshop.location}</span>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2 text-sm">
+                                  <Badge variant="secondary">{workshop.mode}</Badge>
+                                  {workshop.location && (
+                                    <div className="flex items-center space-x-1 text-gray-600">
+                                      <MapPin className="h-3 w-3" />
+                                      <span>{workshop.location}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {workshop.status === 'completed' && workshop.rating && (
+                                  <div className="flex items-center space-x-1">
+                                    {[...Array(workshop.rating)].map((_, i) => (
+                                      <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />
+                                    ))}
                                   </div>
                                 )}
                               </div>
-                              
-                              {workshop.status === 'completed' && workshop.rating && (
-                                <div className="flex items-center space-x-1">
-                                  {[...Array(workshop.rating)].map((_, i) => (
-                                    <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />
-                                  ))}
+
+                              {/* Google Meet Link for Online Approved Workshops */}
+                              {workshop.mode === 'Online' && workshop.status === 'approved' && workshop.meetLink && (
+                                <div className="bg-green-50 p-3 rounded-lg">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-green-800">Meeting Link Ready</span>
+                                    <a 
+                                      href={workshop.meetLink} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="flex items-center space-x-1 text-sm text-green-600 hover:text-green-800"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <span>Join Meeting</span>
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Pending Request Status */}
+                              {workshop.status === 'pending' && (
+                                <div className="bg-yellow-50 p-3 rounded-lg">
+                                  <span className="text-sm font-medium text-yellow-800">
+                                    Request Sent to Admin - Awaiting Approval
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Rejected Status */}
+                              {workshop.status === 'rejected' && (
+                                <div className="bg-red-50 p-3 rounded-lg">
+                                  <span className="text-sm font-medium text-red-800">
+                                    Registration Rejected - Contact Support for Details
+                                  </span>
                                 </div>
                               )}
                             </div>
-
-                            {/* Google Meet Link for Online Confirmed Workshops */}
-                            {workshop.mode === 'Online' && workshop.status === 'confirmed' && workshop.meetLink && (
-                              <div className="bg-green-50 p-3 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium text-green-800">Meeting Link Ready</span>
-                                  <a 
-                                    href={workshop.meetLink} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center space-x-1 text-sm text-green-600 hover:text-green-800"
-                                  >
-                                    <span>Join Meeting</span>
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Pending Request Status */}
-                            {workshop.status === 'pending' && (
-                              <div className="bg-yellow-50 p-3 rounded-lg">
-                                <span className="text-sm font-medium text-yellow-800">
-                                  Request Sent to Admin - Awaiting Approval
-                                </span>
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               )}
