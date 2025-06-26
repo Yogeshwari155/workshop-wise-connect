@@ -146,7 +146,10 @@ const UserDashboard = () => {
         : undefined,
       image: workshop.image,
       location: workshop.location,
-      price: workshop.price, // Ensure price is included
+      price: workshop.price,
+      seats: workshop.seats,
+      registeredSeats: workshop.registeredSeats,
+      registrationMode: workshop.registrationMode,
     };
 
     // Add to registered workshops - real-time update
