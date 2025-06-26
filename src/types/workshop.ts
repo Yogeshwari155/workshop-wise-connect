@@ -11,7 +11,7 @@ export interface Workshop {
   meetLink?: string;
   location?: string;
   rating?: number;
-  price?: number;
+  price: number; // Make price required instead of optional
   seats?: number;
   registeredSeats?: number;
   registrationMode?: string;

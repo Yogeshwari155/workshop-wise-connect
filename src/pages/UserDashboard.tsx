@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
@@ -30,7 +29,8 @@ const UserDashboard = () => {
       mode: "Online",
       status: "approved",
       meetLink: "https://meet.google.com/abc-defg-hij",
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop"
+      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
+      price: 0
     },
     {
       id: 2,
@@ -40,7 +40,8 @@ const UserDashboard = () => {
       time: "2:00 PM",
       mode: "Hybrid",
       status: "pending",
-      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=300&h=200&fit=crop"
+      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=300&h=200&fit=crop",
+      price: 1500
     },
     {
       id: 3,
@@ -52,7 +53,8 @@ const UserDashboard = () => {
       location: "Bangalore",
       status: "completed",
       rating: 5,
-      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=300&h=200&fit=crop"
+      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=300&h=200&fit=crop",
+      price: 2000
     }
   ]);
 
@@ -144,6 +146,7 @@ const UserDashboard = () => {
         : undefined,
       image: workshop.image,
       location: workshop.location,
+      price: workshop.price, // Ensure price is included
     };
 
     // Add to registered workshops - real-time update
@@ -418,7 +421,7 @@ const UserDashboard = () => {
                                 <Users className="h-3 w-3" />
                                 <span>{(workshop.seats || 0) - (workshop.registeredSeats || 0)} seats left</span>
                               </div>
-                              {workshop.price && workshop.price > 0 && (
+                              {workshop.price > 0 && (
                                 <span className="font-medium text-green-600">₹{workshop.price}</span>
                               )}
                             </div>
