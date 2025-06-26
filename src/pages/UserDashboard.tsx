@@ -13,13 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Calendar, Clock, MapPin, User, Star, Building, ExternalLink, Users, Plus } from 'lucide-react';
+import { Workshop } from '../types/workshop';
 
 const UserDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedWorkshop, setSelectedWorkshop] = useState(null);
+  const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
-  const [registeredWorkshops, setRegisteredWorkshops] = useState([
+  const [registeredWorkshops, setRegisteredWorkshops] = useState<Workshop[]>([
     {
       id: 1,
       title: "Advanced React Development",
@@ -56,7 +57,7 @@ const UserDashboard = () => {
   ]);
 
   // Mock available workshops for registration
-  const availableWorkshops = [
+  const availableWorkshops: Workshop[] = [
     {
       id: 4,
       title: "Python for Beginners",
@@ -68,7 +69,8 @@ const UserDashboard = () => {
       seats: 30,
       registeredSeats: 15,
       registrationMode: "automated",
-      image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=300&h=200&fit=crop"
+      image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=300&h=200&fit=crop",
+      status: "available"
     },
     {
       id: 5,
@@ -82,7 +84,8 @@ const UserDashboard = () => {
       seats: 20,
       registeredSeats: 8,
       registrationMode: "manual",
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=300&h=200&fit=crop"
+      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=300&h=200&fit=crop",
+      status: "available"
     }
   ];
 
@@ -127,8 +130,8 @@ const UserDashboard = () => {
     const workshop = availableWorkshops.find(w => w.id === workshopId);
     if (!workshop) return;
 
-    // Create new registration entry with real-time status
-    const newRegistration = {
+    // Create new registration entry with consistent structure
+    const newRegistration: Workshop = {
       id: Date.now(), // Use timestamp as unique ID
       title: workshop.title,
       company: workshop.company,
@@ -136,9 +139,11 @@ const UserDashboard = () => {
       time: workshop.time,
       mode: workshop.mode,
       status: workshop.registrationMode === 'automated' ? 'approved' : 'pending',
-      meetLink: registrationData.meetLink || null,
+      meetLink: workshop.registrationMode === 'automated' && workshop.mode === 'Online' 
+        ? `https://meet.google.com/${Math.random().toString(36).substr(2, 3)}-${Math.random().toString(36).substr(2, 4)}-${Math.random().toString(36).substr(2, 3)}`
+        : undefined,
       image: workshop.image,
-      location: workshop.location
+      location: workshop.location,
     };
 
     // Add to registered workshops - real-time update
@@ -411,9 +416,9 @@ const UserDashboard = () => {
                               <Badge variant="secondary">{workshop.mode}</Badge>
                               <div className="flex items-center space-x-1 text-gray-600">
                                 <Users className="h-3 w-3" />
-                                <span>{workshop.seats - workshop.registeredSeats} seats left</span>
+                                <span>{(workshop.seats || 0) - (workshop.registeredSeats || 0)} seats left</span>
                               </div>
-                              {workshop.price > 0 && (
+                              {workshop.price && workshop.price > 0 && (
                                 <span className="font-medium text-green-600">₹{workshop.price}</span>
                               )}
                             </div>
@@ -423,7 +428,7 @@ const UserDashboard = () => {
                                 setSelectedWorkshop(workshop);
                                 setShowRegistrationModal(true);
                               }}
-                              disabled={workshop.seats <= workshop.registeredSeats}
+                              disabled={(workshop.seats || 0) <= (workshop.registeredSeats || 0)}
                             >
                               Register
                             </Button>
