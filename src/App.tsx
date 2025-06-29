@@ -15,6 +15,11 @@ import AdminDashboard from "./pages/AdminDashboard";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import UserManagement from "./pages/UserManagement";
+import WorkshopManagement from "./pages/WorkshopManagement";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -35,6 +40,11 @@ const App = () => (
             <Route path="/workshop/:id/register" element={<WorkshopRegistration />} />
             <Route path="/dashboard" element={<UserDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/users" element={<UserManagement />} />
+            <Route path="/workshop-management" element={<WorkshopManagement />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
