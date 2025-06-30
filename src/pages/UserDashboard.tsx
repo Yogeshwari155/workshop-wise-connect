@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -128,7 +129,7 @@ const UserDashboard = () => {
         {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
-            Welcome, {user?.firstName} {user?.lastName}!
+            Welcome, {user?.name}!
           </h1>
           <p className="text-gray-600">
             Here's an overview of your workshop registrations and progress.
