@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Feedback from "./pages/Feedback";
+import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
 import UserManagement from "./pages/UserManagement";
 import WorkshopManagement from "./pages/WorkshopManagement";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/about" component={About} />
             <Route path="/contact" component={Contact} />
             <Route path="/feedback" component={Feedback} />
+            <Route path="/gallery" component={Gallery} />
             <Route component={NotFound} />
           </Switch>
         </Router>

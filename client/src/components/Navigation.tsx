@@ -51,6 +51,14 @@ const Navigation = () => {
               Workshops
             </Link>
             <Link
+              to="/gallery"
+              className={`text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/gallery') ? 'text-primary-600 bg-primary-50' : ''
+              }`}
+            >
+              Gallery
+            </Link>
+            <Link
               to="/about"
               className={`text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/about') ? 'text-primary-600 bg-primary-50' : ''
@@ -137,6 +145,13 @@ const Navigation = () => {
                 onClick={() => setIsOpen(false)}
               >
                 Workshops
+              </Link>
+              <Link
+                to="/gallery"
+                className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Gallery
               </Link>
               <Link
                 to="/about"
