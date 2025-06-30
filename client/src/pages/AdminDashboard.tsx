@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -7,197 +6,408 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { useToast } from '../hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Users, 
   Calendar, 
   Building, 
   TrendingUp, 
   Search, 
-  Check, 
-  X, 
   Edit, 
   Trash2,
   Plus,
   Eye
 } from 'lucide-react';
 
+interface Workshop {
+  id: number;
+  title: string;
+  description: string;
+  company: string;
+  date: string;
+  time: string;
+  mode: string;
+  location?: string;
+  price: string;
+  seats: number;
+  registeredSeats: number;
+  registrationMode: string;
+  image: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const AdminDashboard = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [pendingRegistrations, setPendingRegistrations] = useState([
-    {
-      id: 1,
-      user: "Priya Sharma",
-      workshop: "Advanced React Development",
-      reason: "I want to enhance my React skills for my current project at work...",
-      submittedAt: "2 hours ago",
-      status: "pending"
-    },
-    {
-      id: 2,
-      user: "Rajesh Kumar",
-      workshop: "Digital Marketing Masterclass",
-      reason: "Looking to transition into digital marketing and need foundational knowledge...",
-      submittedAt: "5 hours ago",
-      status: "pending"
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    company: '',
+    date: '',
+    time: '',
+    mode: 'online',
+    location: '',
+    price: '',
+    seats: '',
+    image: '',
+    status: 'active'
+  });
+
+  // Fetch workshops from database
+  const { data: workshops = [], isLoading } = useQuery({
+    queryKey: ['/api/workshops'],
+    queryFn: async () => {
+      const response = await fetch('/api/workshops');
+      if (!response.ok) throw new Error('Failed to fetch workshops');
+      return response.json();
     }
-  ]);
+  });
+
+  // Create workshop mutation
+  const createWorkshopMutation = useMutation({
+    mutationFn: async (workshopData: any) => {
+      const response = await fetch('/api/workshops', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(workshopData)
+      });
+      if (!response.ok) throw new Error('Failed to create workshop');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workshops'] });
+      setIsAddModalOpen(false);
+      resetForm();
+      toast({
+        title: "Success!",
+        description: "Workshop created successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create workshop. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update workshop mutation
+  const updateWorkshopMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await fetch(`/api/workshops/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to update workshop');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workshops'] });
+      setIsEditModalOpen(false);
+      resetForm();
+      toast({
+        title: "Success!",
+        description: "Workshop updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update workshop. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete workshop mutation
+  const deleteWorkshopMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/workshops/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete workshop');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workshops'] });
+      toast({
+        title: "Success!",
+        description: "Workshop deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete workshop. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      company: '',
+      date: '',
+      time: '',
+      mode: 'online',
+      location: '',
+      price: '',
+      seats: '',
+      image: '',
+      status: 'active'
+    });
+    setSelectedWorkshop(null);
+  };
+
+  const handleAddWorkshop = () => {
+    resetForm();
+    setIsAddModalOpen(true);
+  };
+
+  const handleEditWorkshop = (workshop: Workshop) => {
+    setSelectedWorkshop(workshop);
+    setFormData({
+      title: workshop.title,
+      description: workshop.description,
+      company: workshop.company,
+      date: workshop.date,
+      time: workshop.time,
+      mode: workshop.mode,
+      location: workshop.location || '',
+      price: workshop.price,
+      seats: workshop.seats.toString(),
+      image: workshop.image,
+      status: workshop.status
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleViewWorkshop = (workshop: Workshop) => {
+    setSelectedWorkshop(workshop);
+    setIsViewModalOpen(true);
+  };
+
+  const handleDeleteWorkshop = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this workshop?')) {
+      deleteWorkshopMutation.mutate(id);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const workshopData = {
+      ...formData,
+      price: parseFloat(formData.price) || 0,
+      seats: parseInt(formData.seats) || 0
+    };
+
+    if (selectedWorkshop) {
+      updateWorkshopMutation.mutate({ id: selectedWorkshop.id, data: workshopData });
+    } else {
+      createWorkshopMutation.mutate(workshopData);
+    }
+  };
 
   const stats = [
-    { label: "Total Users", value: "2,543", icon: Users, color: "text-blue-600" },
-    { label: "Active Workshops", value: "48", icon: Calendar, color: "text-green-600" },
-    { label: "Enterprise Partners", value: "23", icon: Building, color: "text-purple-600" },
-    { label: "Registration Rate", value: "87%", icon: TrendingUp, color: "text-orange-600" }
+    { label: "Total Workshops", value: workshops.length.toString(), icon: Calendar, color: "text-blue-600" },
+    { label: "Active Workshops", value: workshops.filter((w: Workshop) => w.status === 'active').length.toString(), icon: TrendingUp, color: "text-green-600" },
+    { label: "Total Registrations", value: workshops.reduce((sum: number, w: Workshop) => sum + w.registeredSeats, 0).toString(), icon: Users, color: "text-purple-600" },
+    { label: "Available Seats", value: workshops.reduce((sum: number, w: Workshop) => sum + (w.seats - w.registeredSeats), 0).toString(), icon: Building, color: "text-orange-600" }
   ];
 
-  const workshops = [
-    {
-      id: 1,
-      title: "Advanced React Development",
-      company: "TechCorp Solutions",
-      date: "15 Jan 2025",
-      registrations: 18,
-      capacity: 25,
-      status: "active",
-      price: 2500
-    },
-    {
-      id: 2,
-      title: "Digital Marketing Masterclass",
-      company: "Growth Academy",
-      date: "20 Jan 2025",
-      registrations: 45,
-      capacity: 50,
-      status: "active",
-      price: 0
-    },
-    {
-      id: 3,
-      title: "Data Science Fundamentals",
-      company: "DataMinds Inc",
-      date: "10 Jan 2025",
-      registrations: 30,
-      capacity: 30,
-      status: "completed",
-      price: 1800
-    }
-  ];
+  const filteredWorkshops = workshops.filter((workshop: Workshop) =>
+    workshop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    workshop.company.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const enterprises = [
-    {
-      id: 1,
-      name: "TechCorp Solutions",
-      contact: "contact@techcorp.com",
-      workshops: 5,
-      status: "active",
-      joinedAt: "Dec 2024"
-    },
-    {
-      id: 2,
-      name: "Growth Academy",
-      contact: "hello@growthacademy.com",
-      workshops: 3,
-      status: "active",
-      joinedAt: "Nov 2024"
-    }
-  ];
+  const WorkshopForm = () => (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="title">Workshop Title</Label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="company">Company</Label>
+          <Input
+            id="company"
+            value={formData.company}
+            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            required
+          />
+        </div>
+      </div>
 
-  const users = [
-    {
-      id: 1,
-      name: "Priya Sharma",
-      email: "priya@example.com",
-      role: "user",
-      joinedAt: "Jan 2025",
-      workshopsAttended: 3
-    },
-    {
-      id: 2,
-      name: "Rajesh Kumar",
-      email: "rajesh@example.com",
-      role: "user",
-      joinedAt: "Dec 2024",
-      workshopsAttended: 2
-    },
-    {
-      id: 3,
-      name: "TechCorp Solutions",
-      email: "contact@techcorp.com",
-      role: "enterprise",
-      joinedAt: "Dec 2024",
-      workshopsHosted: 5
-    }
-  ];
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          required
+        />
+      </div>
 
-  const handleApproveRegistration = (id: number) => {
-    setPendingRegistrations(prev => 
-      prev.map(reg => 
-        reg.id === id ? { ...reg, status: 'approved' } : reg
-      )
-    );
-    toast({
-      title: "Registration Approved ✅",
-      description: "User has been notified of the approval.",
-    });
-  };
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="date">Date</Label>
+          <Input
+            id="date"
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="time">Time</Label>
+          <Input
+            id="time"
+            value={formData.time}
+            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+            placeholder="e.g., 10:00 AM"
+            required
+          />
+        </div>
+      </div>
 
-  const handleRejectRegistration = (id: number) => {
-    setPendingRegistrations(prev => 
-      prev.map(reg => 
-        reg.id === id ? { ...reg, status: 'rejected' } : reg
-      )
-    );
-    toast({
-      title: "Registration Rejected ❌",
-      description: "User has been notified of the rejection.",
-    });
-  };
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="mode">Mode</Label>
+          <Select value={formData.mode} onValueChange={(value) => setFormData({ ...formData, mode: value })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="online">Online</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
+              <SelectItem value="hybrid">Hybrid</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="location">Location (if offline/hybrid)</Label>
+          <Input
+            id="location"
+            value={formData.location}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          />
+        </div>
+      </div>
 
-  const handleDeleteUser = (userId: number) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      toast({
-        title: "User Deleted",
-        description: "User account has been permanently removed.",
-      });
-    }
-  };
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="price">Price ($)</Label>
+          <Input
+            id="price"
+            type="number"
+            step="0.01"
+            value={formData.price}
+            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="seats">Total Seats</Label>
+          <Input
+            id="seats"
+            type="number"
+            value={formData.seats}
+            onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
+            required
+          />
+        </div>
+      </div>
 
-  const handleDeleteWorkshop = (workshopId: number) => {
-    if (window.confirm('Are you sure you want to delete this workshop? This action cannot be undone.')) {
-      toast({
-        title: "Workshop Deleted",
-        description: "Workshop has been permanently removed.",
-      });
-    }
-  };
+      <div>
+        <Label htmlFor="image">Image URL</Label>
+        <Input
+          id="image"
+          value={formData.image}
+          onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+          placeholder="https://example.com/image.jpg"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="status">Status</Label>
+        <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex justify-end space-x-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setIsAddModalOpen(false);
+            setIsEditModalOpen(false);
+            resetForm();
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={createWorkshopMutation.isPending || updateWorkshopMutation.isPending}
+        >
+          {selectedWorkshop ? 'Update Workshop' : 'Create Workshop'}
+        </Button>
+      </div>
+    </form>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Manage workshops, users, and monitor platform activity
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Manage workshops, users, and system settings</p>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="border-0 shadow-lg">
+            <Card key={index}>
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                <div className="flex items-center">
+                  <div className={`p-2 rounded-lg ${stat.color.replace('text-', 'bg-').replace('-600', '-100')}`}>
+                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
                   </div>
-                  <div className={`p-3 rounded-full bg-gray-100 ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   </div>
                 </div>
               </CardContent>
@@ -205,88 +415,28 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="registrations" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="registrations">Pending Approvals</TabsTrigger>
-            <TabsTrigger value="workshops">Workshops</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="enterprises">Enterprises</TabsTrigger>
+        <Tabs defaultValue="workshops" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="workshops">Workshop Management</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="registrations" className="space-y-6">
-            <Card className="border-0 shadow-lg">
+          <TabsContent value="workshops">
+            <Card>
               <CardHeader>
-                <CardTitle>Registration Approval Panel</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Workshop Management</CardTitle>
+                  <Button onClick={handleAddWorkshop} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Workshop
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                {pendingRegistrations.filter(r => r.status === 'pending').length === 0 ? (
-                  <div className="text-center py-8">
-                    <Check className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
-                    <p className="text-gray-600">No pending registrations to review.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingRegistrations.map((registration) => (
-                      <div key={registration.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{registration.user}</h3>
-                            <p className="text-gray-600">{registration.workshop}</p>
-                            <p className="text-sm text-gray-500">Submitted {registration.submittedAt}</p>
-                          </div>
-                          <div className="flex space-x-2">
-                            {registration.status === 'pending' ? (
-                              <>
-                                <Button 
-                                  size="sm" 
-                                  className="bg-green-500 hover:bg-green-600"
-                                  onClick={() => handleApproveRegistration(registration.id)}
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Approve
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive"
-                                  onClick={() => handleRejectRegistration(registration.id)}
-                                >
-                                  <X className="h-4 w-4 mr-1" />
-                                  Reject
-                                </Button>
-                              </>
-                            ) : (
-                              <Badge variant={registration.status === 'approved' ? 'default' : 'destructive'}>
-                                {registration.status === 'approved' ? 'Approved' : 'Rejected'}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded p-3">
-                          <p className="text-sm text-gray-700">{registration.reason}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="workshops" className="space-y-6">
-            <Card className="border-0 shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Workshop Management</CardTitle>
-                <Button className="bg-gradient-to-r from-primary-500 to-accent-500">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Workshop
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+                <div className="mb-4">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Search workshops..."
                       value={searchTerm}
@@ -294,167 +444,178 @@ const AdminDashboard = () => {
                       className="pl-10"
                     />
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    {workshops.map((workshop) => (
-                      <div key={workshop.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3">
-                              <h3 className="font-semibold text-gray-900">{workshop.title}</h3>
-                              <Badge variant={workshop.status === 'active' ? 'default' : 'secondary'}>
+                {isLoading ? (
+                  <div className="text-center py-8">Loading workshops...</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full table-auto">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-4">Workshop</th>
+                          <th className="text-left p-4">Company</th>
+                          <th className="text-left p-4">Date</th>
+                          <th className="text-left p-4">Seats</th>
+                          <th className="text-left p-4">Price</th>
+                          <th className="text-left p-4">Status</th>
+                          <th className="text-left p-4">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredWorkshops.map((workshop: Workshop) => (
+                          <tr key={workshop.id} className="border-b hover:bg-gray-50">
+                            <td className="p-4">
+                              <div className="font-medium text-gray-900">{workshop.title}</div>
+                            </td>
+                            <td className="p-4 text-gray-600">{workshop.company}</td>
+                            <td className="p-4 text-gray-600">{workshop.date}</td>
+                            <td className="p-4">
+                              <span className="text-gray-900">
+                                {workshop.registeredSeats}/{workshop.seats}
+                              </span>
+                            </td>
+                            <td className="p-4 text-gray-600">
+                              ${parseFloat(workshop.price).toFixed(2)}
+                            </td>
+                            <td className="p-4">
+                              <Badge 
+                                variant={workshop.status === 'active' ? 'default' : 'secondary'}
+                                className={
+                                  workshop.status === 'active' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-gray-100 text-gray-800'
+                                }
+                              >
                                 {workshop.status}
                               </Badge>
-                              {workshop.price === 0 && (
-                                <Badge className="bg-green-500 text-white">FREE</Badge>
-                              )}
-                            </div>
-                            <p className="text-gray-600">{workshop.company}</p>
-                            <div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
-                              <span>📅 {workshop.date}</span>
-                              <span>👥 {workshop.registrations}/{workshop.capacity} registered</span>
-                              {workshop.price > 0 && <span>💰 ₹{workshop.price}</span>}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleDeleteWorkshop(workshop.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-3">
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-to-r from-primary-500 to-accent-500 h-2 rounded-full" 
-                              style={{ width: `${(workshop.registrations / workshop.capacity) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                            </td>
+                            <td className="p-4">
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleViewWorkshop(workshop)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditWorkshop(workshop)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteWorkshop(workshop.id)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
-            <Card className="border-0 shadow-lg">
+          <TabsContent value="users">
+            <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {users.map((user) => (
-                    <div key={user.id} className="border rounded-lg p-4 flex justify-between items-center">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                        <p className="text-gray-600">{user.email}</p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                          <Badge variant="secondary">{user.role}</Badge>
-                          <span>📅 Joined {user.joinedAt}</span>
-                          {user.role === 'user' && (
-                            <span>📚 {user.workshopsAttended} workshops attended</span>
-                          )}
-                          {user.role === 'enterprise' && (
-                            <span>🏢 {user.workshopsHosted} workshops hosted</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-gray-600">User management features coming soon...</p>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="enterprises" className="space-y-6">
-            <Card className="border-0 shadow-lg">
+          <TabsContent value="analytics">
+            <Card>
               <CardHeader>
-                <CardTitle>Enterprise Partners</CardTitle>
+                <CardTitle>Analytics & Reports</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {enterprises.map((enterprise) => (
-                    <div key={enterprise.id} className="border rounded-lg p-4 flex justify-between items-center">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{enterprise.name}</h3>
-                        <p className="text-gray-600">{enterprise.contact}</p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                          <span>📚 {enterprise.workshops} workshops</span>
-                          <span>📅 Joined {enterprise.joinedAt}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={enterprise.status === 'active' ? 'default' : 'secondary'}>
-                          {enterprise.status}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Platform Analytics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Dashboard</h3>
-                  <p className="text-gray-600">Detailed analytics and insights coming soon.</p>
-                </div>
+                <p className="text-gray-600">Analytics dashboard coming soon...</p>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add Workshop Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Workshop</DialogTitle>
+          </DialogHeader>
+          <WorkshopForm />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Workshop Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Workshop</DialogTitle>
+          </DialogHeader>
+          <WorkshopForm />
+        </DialogContent>
+      </Dialog>
+
+      {/* View Workshop Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Workshop Details</DialogTitle>
+          </DialogHeader>
+          {selectedWorkshop && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-lg">{selectedWorkshop.title}</h3>
+                <p className="text-gray-600">{selectedWorkshop.company}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Description</p>
+                <p>{selectedWorkshop.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Date & Time</p>
+                  <p>{selectedWorkshop.date} at {selectedWorkshop.time}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Mode</p>
+                  <p className="capitalize">{selectedWorkshop.mode}</p>
+                </div>
+              </div>
+              {selectedWorkshop.location && (
+                <div>
+                  <p className="text-sm text-gray-600">Location</p>
+                  <p>{selectedWorkshop.location}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Price</p>
+                  <p>${parseFloat(selectedWorkshop.price).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Seats</p>
+                  <p>{selectedWorkshop.registeredSeats}/{selectedWorkshop.seats}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

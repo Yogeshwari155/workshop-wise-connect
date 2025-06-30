@@ -8,9 +8,14 @@ import { Menu, X, Calendar, IndianRupee, MapPin } from 'lucide-react';
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const isActive = (path: string) => location === path;
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/');
+  };
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -84,7 +89,7 @@ const Navigation = () => {
                     </Button>
                   </Link>
                 )}
-                <Button onClick={logout} variant="outline" size="sm">
+                <Button onClick={handleLogout} variant="outline" size="sm">
                   Logout
                 </Button>
               </div>
@@ -170,7 +175,7 @@ const Navigation = () => {
                         </Button>
                       </Link>
                     )}
-                    <Button onClick={() => { logout(); setIsOpen(false); }} variant="outline" className="w-full">
+                    <Button onClick={() => { handleLogout(); setIsOpen(false); }} variant="outline" className="w-full">
                       Logout
                     </Button>
                   </div>
