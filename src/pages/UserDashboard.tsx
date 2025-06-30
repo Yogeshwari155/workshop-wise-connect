@@ -1,465 +1,375 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import ProfileManagement from '../components/ProfileManagement';
-import EnterpriseDashboard from '../components/EnterpriseDashboard';
-import WorkshopRegistrationModal from '../components/WorkshopRegistrationModal';
-import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../hooks/use-toast';
-import { Calendar, Clock, MapPin, User, Star, Building, ExternalLink, Users, Plus } from 'lucide-react';
-import { Workshop } from '../types/workshop';
+import { Calendar, Clock, MapPin, Users, Star, TrendingUp, Award, BookOpen } from 'lucide-react';
+
+interface Workshop {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  seats?: number;
+}
+
+interface Registration {
+  id: string;
+  workshopId: string;
+  userId: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  workshop: Workshop;
+  rating: number | null;
+}
+
+const mockRegistrations: Registration[] = [
+  {
+    id: '1',
+    workshopId: '101',
+    userId: 'user123',
+    status: 'confirmed',
+    workshop: {
+      id: '101',
+      title: 'React Fundamentals',
+      description: 'Learn the basics of React development.',
+      date: '2024-08-15',
+      time: '10:00 AM - 4:00 PM',
+      location: 'Online',
+      seats: 30,
+    },
+    rating: null,
+  },
+  {
+    id: '2',
+    workshopId: '102',
+    userId: 'user123',
+    status: 'completed',
+    workshop: {
+      id: '102',
+      title: 'Node.js Masterclass',
+      description: 'Become a Node.js expert.',
+      date: '2024-07-20',
+      time: '9:00 AM - 5:00 PM',
+      location: 'Bangalore',
+      seats: 25,
+    },
+    rating: 5,
+  },
+  {
+    id: '3',
+    workshopId: '103',
+    userId: 'user123',
+    status: 'pending',
+    workshop: {
+      id: '103',
+      title: 'UI/UX Design',
+      description: 'Design beautiful user interfaces.',
+      date: '2024-09-01',
+      time: '11:00 AM - 3:00 PM',
+      location: 'Mumbai',
+      seats: 20,
+    },
+    rating: null,
+  },
+  {
+    id: '4',
+    workshopId: '104',
+    userId: 'user123',
+    status: 'confirmed',
+    workshop: {
+      id: '104',
+      title: 'Next.js Framework',
+      description: 'The world’s leading React framework for building full-stack applications.',
+      date: '2024-08-22',
+      time: '10:00 AM - 4:00 PM',
+      location: 'Online',
+      seats: 30,
+    },
+    rating: null,
+  },
+];
 
 const UserDashboard = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
-  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
-  const [registeredWorkshops, setRegisteredWorkshops] = useState<Workshop[]>([
-    {
-      id: 1,
-      title: "Advanced React Development",
-      company: "TechCorp Solutions",
-      date: "15 Jan 2025",
-      time: "10:00 AM",
-      mode: "Online",
-      status: "approved",
-      meetLink: "https://meet.google.com/abc-defg-hij",
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
-      price: 0
-    },
-    {
-      id: 2,
-      title: "Digital Marketing Masterclass",
-      company: "Growth Academy",
-      date: "20 Jan 2025",
-      time: "2:00 PM",
-      mode: "Hybrid",
-      status: "pending",
-      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=300&h=200&fit=crop",
-      price: 1500
-    },
-    {
-      id: 3,
-      title: "Data Science Fundamentals",
-      company: "DataMinds Inc",
-      date: "10 Jan 2025",
-      time: "9:00 AM",
-      mode: "Offline",
-      location: "Bangalore",
-      status: "completed",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=300&h=200&fit=crop",
-      price: 2000
-    }
-  ]);
+  const [registrations, setRegistrations] = useState<Registration[]>(mockRegistrations);
 
-  // Mock available workshops for registration
-  const availableWorkshops: Workshop[] = [
-    {
-      id: 4,
-      title: "Python for Beginners",
-      company: "CodeAcademy",
-      date: "25 Jan 2025",
-      time: "11:00 AM",
-      mode: "Online",
-      price: 0,
-      seats: 30,
-      registeredSeats: 15,
-      registrationMode: "automated",
-      image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=300&h=200&fit=crop",
-      status: "available"
-    },
-    {
-      id: 5,
-      title: "UI/UX Design Workshop",
-      company: "Design Studio",
-      date: "30 Jan 2025",
-      time: "2:00 PM",
-      mode: "Hybrid",
-      location: "Mumbai",
-      price: 1500,
-      seats: 20,
-      registeredSeats: 8,
-      registrationMode: "manual",
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=300&h=200&fit=crop",
-      status: "available"
-    }
-  ];
+  const handleCancelRegistration = (workshopId: string) => {
+    setRegistrations(prev => prev.filter(reg => reg.workshopId !== workshopId));
+  };
 
-  // If user is enterprise, show enterprise dashboard
-  if (user?.role === 'enterprise') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <Navigation />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2">
-              <TabsTrigger value="dashboard" className="flex items-center space-x-2">
-                <Building className="h-4 w-4" />
-                <span>Enterprise Dashboard</span>
-              </TabsTrigger>
-              <TabsTrigger value="profile" className="flex items-center space-x-2">
-                <User className="h-4 w-4" />
-                <span>Profile</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="dashboard">
-              <EnterpriseDashboard />
-            </TabsContent>
-
-            <TabsContent value="profile">
-              <ProfileManagement />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        <Footer />
-      </div>
+  const handleRateWorkshop = (workshopId: string, rating: number) => {
+    setRegistrations(prev => 
+      prev.map(reg => 
+        reg.workshopId === workshopId 
+          ? { ...reg, rating }
+          : reg
+      )
     );
-  }
-
-  const handleWorkshopRegistration = (workshopId: number, registrationData: any) => {
-    console.log('Registration data:', registrationData);
-    
-    // Find the workshop being registered for
-    const workshop = availableWorkshops.find(w => w.id === workshopId);
-    if (!workshop) return;
-
-    // Create new registration entry with consistent structure
-    const newRegistration: Workshop = {
-      id: Date.now(), // Use timestamp as unique ID
-      title: workshop.title,
-      company: workshop.company,
-      date: workshop.date,
-      time: workshop.time,
-      mode: workshop.mode,
-      status: workshop.registrationMode === 'automated' ? 'approved' : 'pending',
-      meetLink: workshop.registrationMode === 'automated' && workshop.mode === 'Online' 
-        ? `https://meet.google.com/${Math.random().toString(36).substr(2, 3)}-${Math.random().toString(36).substr(2, 4)}-${Math.random().toString(36).substr(2, 3)}`
-        : undefined,
-      image: workshop.image,
-      location: workshop.location,
-      price: workshop.price,
-      seats: workshop.seats,
-      registeredSeats: workshop.registeredSeats,
-      registrationMode: workshop.registrationMode,
-    };
-
-    // Add to registered workshops - real-time update
-    setRegisteredWorkshops(prev => [...prev, newRegistration]);
-    setShowRegistrationModal(false);
-
-    // Show success message
-    toast({
-      title: workshop.registrationMode === 'automated' ? "Registration Successful! 🎉" : "Request Submitted! 📋",
-      description: workshop.registrationMode === 'automated' 
-        ? "Workshop has been added to your dashboard!" 
-        : "Your registration request is pending approval.",
-    });
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-500 text-white">Approved</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500 text-white">Pending Approval</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-500 text-white">Rejected</Badge>;
-      case 'completed':
-        return <Badge className="bg-blue-500 text-white">Completed</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
+  const upcomingWorkshops = registrations.filter(reg => reg.status === 'confirmed');
+  const completedWorkshops = registrations.filter(reg => reg.status === 'completed');
+  const pendingWorkshops = registrations.filter(reg => reg.status === 'pending');
+
+  const totalWorkshops = registrations.length;
+  const completionRate = totalWorkshops > 0 ? (completedWorkshops.length / totalWorkshops) * 100 : 0;
+  const averageRating = completedWorkshops.reduce((acc, reg) => acc + (reg.rating || 0), 0) / completedWorkshops.length || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
-            Welcome back, {user?.name}! 👋
+            Welcome, {user?.firstName} {user?.lastName}!
           </h1>
           <p className="text-gray-600">
-            Manage your workshops and track your learning progress
+            Here's an overview of your workshop registrations and progress.
           </p>
         </div>
 
-        <Tabs defaultValue="my-workshops" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3">
-            <TabsTrigger value="my-workshops" className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" />
-              <span>My Workshops</span>
-            </TabsTrigger>
-            <TabsTrigger value="available" className="flex items-center space-x-2">
-              <Plus className="h-4 w-4" />
-              <span>Available</span>
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Profile</span>
-            </TabsTrigger>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Workshops */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardContent className="p-6 space-y-4">
+              <div className="bg-gradient-to-r from-primary-500 to-accent-500 p-3 rounded-full w-14 h-14 flex items-center justify-center text-white mx-auto">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <div className="text-center space-y-2">
+                <CardTitle className="text-2xl font-bold text-gray-900">{totalWorkshops}</CardTitle>
+                <CardHeader className="text-gray-600">Total Workshops</CardHeader>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Completion Rate */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardContent className="p-6 space-y-4">
+              <div className="bg-gradient-to-r from-green-400 to-green-600 p-3 rounded-full w-14 h-14 flex items-center justify-center text-white mx-auto">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <div className="text-center space-y-2">
+                <CardTitle className="text-2xl font-bold text-gray-900">{completionRate.toFixed(1)}%</CardTitle>
+                <CardHeader className="text-gray-600">Completion Rate</CardHeader>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Average Rating */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardContent className="p-6 space-y-4">
+              <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 p-3 rounded-full w-14 h-14 flex items-center justify-center text-white mx-auto">
+                <Star className="h-6 w-6" />
+              </div>
+              <div className="text-center space-y-2">
+                <CardTitle className="text-2xl font-bold text-gray-900">{averageRating.toFixed(1)}</CardTitle>
+                <CardHeader className="text-gray-600">Average Rating</CardHeader>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Workshops Completed */}
+          <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardContent className="p-6 space-y-4">
+              <div className="bg-gradient-to-r from-blue-400 to-blue-600 p-3 rounded-full w-14 h-14 flex items-center justify-center text-white mx-auto">
+                <Award className="h-6 w-6" />
+              </div>
+              <div className="text-center space-y-2">
+                <CardTitle className="text-2xl font-bold text-gray-900">{completedWorkshops.length}</CardTitle>
+                <CardHeader className="text-gray-600">Workshops Completed</CardHeader>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Workshop Tabs */}
+        <Tabs defaultValue="upcoming" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="upcoming">Upcoming ({upcomingWorkshops.length})</TabsTrigger>
+            <TabsTrigger value="completed">Completed ({completedWorkshops.length})</TabsTrigger>
+            <TabsTrigger value="pending">Pending ({pendingWorkshops.length})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="my-workshops" className="space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-primary-600 mb-2">
-                    {registeredWorkshops.length}
-                  </div>
-                  <div className="text-gray-600">Total Workshops</div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-green-600 mb-2">
-                    {registeredWorkshops.filter(w => w.status === 'approved').length}
-                  </div>
-                  <div className="text-gray-600">Approved</div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-yellow-600 mb-2">
-                    {registeredWorkshops.filter(w => w.status === 'pending').length}
-                  </div>
-                  <div className="text-gray-600">Pending</div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-blue-600 mb-2">
-                    {registeredWorkshops.filter(w => w.status === 'completed').length}
-                  </div>
-                  <div className="text-gray-600">Completed</div>
-                </CardContent>
-              </Card>
-            </div>
+          <TabsContent value="upcoming" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {upcomingWorkshops.map((registration) => (
+                <Card key={registration.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-xl font-semibold text-gray-900">
+                          {registration.workshop.title}
+                        </h3>
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          {registration.status}
+                        </Badge>
+                      </div>
 
-            {/* Registered Workshop List */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-display font-semibold text-gray-900">
-                Your Registered Workshops
-              </h2>
+                      <p className="text-gray-600 text-sm">
+                        {registration.workshop.description}
+                      </p>
 
-              {registeredWorkshops.length === 0 ? (
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-12 text-center">
-                    <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No workshops registered yet
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      Start your learning journey by registering for your first workshop
-                    </p>
-                    <Link to="/workshops">
-                      <Button className="bg-gradient-to-r from-primary-500 to-accent-500">
-                        Explore Workshops
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {registeredWorkshops.map((workshop) => (
-                    <Link key={workshop.id} to={`/workshop/${workshop.id}`}>
-                      <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                        <CardContent className="p-0">
-                          <div className="flex">
-                            <img 
-                              src={workshop.image} 
-                              alt={workshop.title}
-                              className="w-24 h-24 object-cover rounded-l-lg"
-                            />
-                            <div className="flex-1 p-4 space-y-3">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h3 className="font-semibold text-gray-900">{workshop.title}</h3>
-                                  <p className="text-sm text-gray-600">{workshop.company}</p>
-                                </div>
-                                {getStatusBadge(workshop.status)}
-                              </div>
-
-                              <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                <div className="flex items-center space-x-1">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>{workshop.date}</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <Clock className="h-4 w-4" />
-                                  <span>{workshop.time}</span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2 text-sm">
-                                  <Badge variant="secondary">{workshop.mode}</Badge>
-                                  {workshop.location && (
-                                    <div className="flex items-center space-x-1 text-gray-600">
-                                      <MapPin className="h-3 w-3" />
-                                      <span>{workshop.location}</span>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {workshop.status === 'completed' && workshop.rating && (
-                                  <div className="flex items-center space-x-1">
-                                    {[...Array(workshop.rating)].map((_, i) => (
-                                      <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Google Meet Link for Online Approved Workshops */}
-                              {workshop.mode === 'Online' && workshop.status === 'approved' && workshop.meetLink && (
-                                <div className="bg-green-50 p-3 rounded-lg">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium text-green-800">Meeting Link Ready</span>
-                                    <a 
-                                      href={workshop.meetLink} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="flex items-center space-x-1 text-sm text-green-600 hover:text-green-800"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <span>Join Meeting</span>
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Pending Request Status */}
-                              {workshop.status === 'pending' && (
-                                <div className="bg-yellow-50 p-3 rounded-lg">
-                                  <span className="text-sm font-medium text-yellow-800">
-                                    Request Sent to Admin - Awaiting Approval
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Rejected Status */}
-                              {workshop.status === 'rejected' && (
-                                <div className="bg-red-50 p-3 rounded-lg">
-                                  <span className="text-sm font-medium text-red-800">
-                                    Registration Rejected - Contact Support for Details
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="available" className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-display font-semibold text-gray-900">
-                  Available Workshops
-                </h2>
-                <Link to="/workshops">
-                  <Button variant="outline">View All Workshops</Button>
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {availableWorkshops.map((workshop) => (
-                  <Card key={workshop.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                    <CardContent className="p-0">
-                      <div className="flex">
-                        <img 
-                          src={workshop.image} 
-                          alt={workshop.title}
-                          className="w-24 h-24 object-cover rounded-l-lg"
-                        />
-                        <div className="flex-1 p-4 space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-semibold text-gray-900">{workshop.title}</h3>
-                              <p className="text-sm text-gray-600">{workshop.company}</p>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Badge variant={workshop.registrationMode === 'automated' ? 'default' : 'secondary'}>
-                                {workshop.registrationMode === 'automated' ? 'Instant' : 'Manual'}
-                              </Badge>
-                              {workshop.price === 0 && (
-                                <Badge className="bg-green-500 text-white">FREE</Badge>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <div className="flex items-center space-x-1">
-                              <Calendar className="h-4 w-4" />
-                              <span>{workshop.date}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{workshop.time}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4 text-sm">
-                              <Badge variant="secondary">{workshop.mode}</Badge>
-                              <div className="flex items-center space-x-1 text-gray-600">
-                                <Users className="h-3 w-3" />
-                                <span>{(workshop.seats || 0) - (workshop.registeredSeats || 0)} seats left</span>
-                              </div>
-                              {workshop.price > 0 && (
-                                <span className="font-medium text-green-600">₹{workshop.price}</span>
-                              )}
-                            </div>
-                            <Button 
-                              size="sm"
-                              onClick={() => {
-                                setSelectedWorkshop(workshop);
-                                setShowRegistrationModal(true);
-                              }}
-                              disabled={(workshop.seats || 0) <= (workshop.registeredSeats || 0)}
-                            >
-                              Register
-                            </Button>
-                          </div>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>{registration.workshop.date}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>{registration.workshop.time}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{registration.workshop.location}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4" />
+                          <span>{registration.workshop.seats || 'N/A'} seats available</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+
+                      <div className="flex space-x-3 pt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleCancelRegistration(registration.workshopId)}
+                        >
+                          Cancel Registration
+                        </Button>
+                        <Button size="sm">
+                          View Details
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="profile" className="space-y-6">
-            <ProfileManagement />
+          <TabsContent value="completed" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {completedWorkshops.map((registration) => (
+                <Card key={registration.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-xl font-semibold text-gray-900">
+                          {registration.workshop.title}
+                        </h3>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {registration.status}
+                        </Badge>
+                      </div>
+
+                      <p className="text-gray-600 text-sm">
+                        {registration.workshop.description}
+                      </p>
+
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>{registration.workshop.date}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>{registration.workshop.time}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{registration.workshop.location}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4" />
+                          <span>{registration.workshop.seats || 'N/A'} seats available</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-4 pt-4">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => handleRateWorkshop(registration.workshopId, star)}
+                          >
+                            <Star
+                              className={`h-5 w-5 ${
+                                star <= (registration.rating || 0)
+                                  ? 'text-yellow-400 fill-yellow-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="pending" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {pendingWorkshops.map((registration) => (
+                <Card key={registration.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-xl font-semibold text-gray-900">
+                          {registration.workshop.title}
+                        </h3>
+                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          {registration.status}
+                        </Badge>
+                      </div>
+
+                      <p className="text-gray-600 text-sm">
+                        {registration.workshop.description}
+                      </p>
+
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>{registration.workshop.date}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>{registration.workshop.time}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{registration.workshop.location}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4" />
+                          <span>{registration.workshop.seats || 'N/A'} seats available</span>
+                        </div>
+                      </div>
+
+                      <div className="flex space-x-3 pt-4">
+                        <Button variant="outline" size="sm">
+                          Contact Support
+                        </Button>
+                        <Button size="sm">
+                          View Details
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
-
-      <WorkshopRegistrationModal
-        workshop={selectedWorkshop}
-        isOpen={showRegistrationModal}
-        onClose={() => setShowRegistrationModal(false)}
-        onRegister={handleWorkshopRegistration}
-      />
 
       <Footer />
     </div>

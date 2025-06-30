@@ -61,6 +61,14 @@ const Navigation = () => {
             >
               Contact
             </Link>
+            <Link
+              to="/feedback"
+              className={`text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/feedback') ? 'text-primary-600 bg-primary-50' : ''
+              }`}
+            >
+              Feedback
+            </Link>
 
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
@@ -138,6 +146,13 @@ const Navigation = () => {
                 onClick={() => setIsOpen(false)}
               >
                 Contact
+              </Link>
+              <Link
+                to="/feedback"
+                className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Feedback
               </Link>
               
               <div className="pt-4 pb-3 border-t border-gray-200">

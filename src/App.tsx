@@ -14,6 +14,7 @@ import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Feedback from "./pages/Feedback";
 import NotFound from "./pages/NotFound";
 import UserManagement from "./pages/UserManagement";
 import WorkshopManagement from "./pages/WorkshopManagement";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
