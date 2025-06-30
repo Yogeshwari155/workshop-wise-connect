@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Router, Route, Switch } from "wouter";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -31,27 +31,27 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/workshops" element={<Workshops />} />
-            <Route path="/workshop/:id" element={<WorkshopDetail />} />
-            <Route path="/workshop/:id/register" element={<WorkshopRegistration />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/workshop-management" element={<WorkshopManagement />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/feedback" element={<Feedback />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <Router>
+          <Switch>
+            <Route path="/" component={Index} />
+            <Route path="/login" component={Login} />
+            <Route path="/register" component={Register} />
+            <Route path="/workshops" component={Workshops} />
+            <Route path="/workshop/:id" component={WorkshopDetail} />
+            <Route path="/workshop/:id/register" component={WorkshopRegistration} />
+            <Route path="/dashboard" component={UserDashboard} />
+            <Route path="/admin" component={AdminDashboard} />
+            <Route path="/users" component={UserManagement} />
+            <Route path="/workshop-management" component={WorkshopManagement} />
+            <Route path="/reports" component={Reports} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/about" component={About} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/feedback" component={Feedback} />
+            <Route component={NotFound} />
+          </Switch>
+        </Router>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

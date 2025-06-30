@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'wouter';
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { Menu, X, Calendar, IndianRupee, MapPin } from 'lucide-react';
@@ -8,9 +8,9 @@ import { Menu, X, Calendar, IndianRupee, MapPin } from 'lucide-react';
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
-  const location = useLocation();
+  const [location] = useLocation();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location === path;
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">

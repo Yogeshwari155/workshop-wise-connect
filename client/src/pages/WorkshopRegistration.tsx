@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
@@ -14,7 +14,7 @@ import { Calendar, IndianRupee, Upload, CheckCircle } from 'lucide-react';
 
 const WorkshopRegistration = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [registrationMode, setRegistrationMode] = useState('automated');
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
@@ -66,13 +66,13 @@ const WorkshopRegistration = () => {
           title: "Registration Successful! 🎉",
           description: "You're confirmed for the workshop. Check your email for details.",
         });
-        navigate('/dashboard');
+        setLocation('/dashboard');
       } else {
         toast({
           title: "Registration Submitted! ⏳",
           description: "Your request has been sent to admin for approval. You'll be notified via email.",
         });
-        navigate('/dashboard');
+        setLocation('/dashboard');
       }
     } catch (error) {
       toast({

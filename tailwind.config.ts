@@ -24,6 +24,8 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          500: "hsl(var(--primary-500))",
+          600: "hsl(var(--primary-600))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -36,6 +38,8 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          500: "hsl(var(--accent-500))",
+          600: "hsl(var(--accent-600))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

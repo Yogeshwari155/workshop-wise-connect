@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
@@ -34,7 +34,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +55,7 @@ const Register = () => {
           title: "Welcome to WorkshopWise! 🎉",
           description: "Your account has been created successfully.",
         });
-        navigate('/dashboard');
+        setLocation('/dashboard');
       }
     } catch (error) {
       toast({
@@ -87,7 +87,7 @@ const Register = () => {
           title: "Welcome to WorkshopWise! 🎉",
           description: "Your enterprise account has been created successfully.",
         });
-        navigate('/dashboard');
+        setLocation('/dashboard');
       }
     } catch (error) {
       toast({
