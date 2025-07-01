@@ -98,7 +98,7 @@ const Gallery = () => {
   const stats = {
     totalEvents: galleryItems.length,
     totalParticipants: galleryItems.reduce((sum, item) => sum + item.participants, 0),
-    cities: [...new Set(galleryItems.map(item => item.location.split(', ')[1]))].length
+    cities: Array.from(new Set(galleryItems.map(item => item.location.split(', ')[1]))).length
   };
 
   return (
