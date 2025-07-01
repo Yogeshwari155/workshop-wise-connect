@@ -1,340 +1,355 @@
 
 import React, { useState } from 'react';
-import { useParams, Link } from 'wouter';
-import Navigation from '../components/Navigation';
-import Footer from '../components/Footer';
-import WorkshopRegistrationModal from '../components/WorkshopRegistrationModal';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Card, CardContent } from '../components/ui/card';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../hooks/use-toast';
-import { Calendar, MapPin, IndianRupee, Users, Clock, Star, User, Building, ArrowLeft } from 'lucide-react';
+import { useParams } from 'wouter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  Users, 
+  Star, 
+  Bookmark,
+  Share2,
+  ChevronRight,
+  CheckCircle,
+  DollarSign
+} from 'lucide-react';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+
+interface Workshop {
+  id: number;
+  title: string;
+  company: string;
+  price: number;
+  originalPrice: number;
+  mode: string;
+  duration: string;
+  seats: number;
+  bookedSeats: number;
+  rating: number;
+  reviews: number;
+  image: string;
+  description: string;
+  instructor: string;
+  instructorImage: string;
+  level: string;
+  category: string;
+  date: string;
+  time: string;
+  location: string;
+  highlights: string[];
+  requirements: string[];
+  agenda: Array<{
+    time: string;
+    topic: string;
+    description: string;
+  }>;
+}
 
 const WorkshopDetail = () => {
   const { id } = useParams();
-  const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const [selectedWorkshop, setSelectedWorkshop] = useState(null);
-  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [workshop, setWorkshop] = useState<Workshop | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Mock workshop data - in real app, this would come from API based on ID
-  const workshop = {
-    id: parseInt(id || '1'),
-    title: "Advanced React Development",
-    company: "TechCorp Solutions",
-    price: 2500,
-    originalPrice: 3500,
-    mode: "Online",
-    duration: "3 days",
-    seats: 25,
-    bookedSeats: 18,
-    rating: 4.8,
-    reviews: 156,
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=400&fit=crop",
-    tags: ["React", "JavaScript", "Frontend"],
-    isFree: false,
-    date: "15 Jan 2025",
-    time: "10:00 AM - 6:00 PM",
-    registrationDeadline: "10 Jan 2025",
-    registrationMode: "automated",
-    instructor: {
-      name: "Rahul Sharma",
-      designation: "Senior React Developer",
-      company: "TechCorp Solutions",
-      experience: "8+ years",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
-    },
-    description: `Join us for an intensive 3-day workshop on Advanced React Development. This hands-on session will cover modern React patterns, performance optimization, and best practices used in production applications.
+  // Mock workshop data - in real app, this would come from API
+  React.useEffect(() => {
+    const mockWorkshop: Workshop = {
+      id: parseInt(id || '1'),
+      title: 'Advanced React Development Workshop',
+      company: 'TechCorp Solutions',
+      price: 2999,
+      originalPrice: 4999,
+      mode: 'Hybrid',
+      duration: '2 days',
+      seats: 30,
+      bookedSeats: 23,
+      rating: 4.8,
+      reviews: 156,
+      image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=600&fit=crop',
+      description: 'Master advanced React concepts including hooks, context, performance optimization, and modern development patterns. This comprehensive workshop will take your React skills to the next level.',
+      instructor: 'Sarah Johnson',
+      instructorImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b567?w=150&h=150&fit=crop',
+      level: 'Advanced',
+      category: 'Frontend Development',
+      date: '2024-04-15',
+      time: '09:00 AM - 05:00 PM',
+      location: 'Tech Hub, Mumbai & Online',
+      highlights: [
+        'Hands-on coding exercises',
+        'Real-world project implementation',
+        'Performance optimization techniques',
+        'Modern React patterns and best practices',
+        'Certificate of completion',
+        'Lifetime access to resources'
+      ],
+      requirements: [
+        'Basic knowledge of React',
+        'JavaScript ES6+ familiarity',
+        'Node.js installed on your machine',
+        'Code editor (VS Code recommended)',
+        'Stable internet connection for online participants'
+      ],
+      agenda: [
+        {
+          time: '09:00 - 10:30',
+          topic: 'Advanced Hooks',
+          description: 'Deep dive into useEffect, useCallback, useMemo, and custom hooks'
+        },
+        {
+          time: '10:45 - 12:00',
+          topic: 'Context & State Management',
+          description: 'Advanced state management patterns and context optimization'
+        },
+        {
+          time: '13:00 - 14:30',
+          topic: 'Performance Optimization',
+          description: 'React.memo, lazy loading, and performance profiling'
+        },
+        {
+          time: '14:45 - 17:00',
+          topic: 'Project Implementation',
+          description: 'Build a complete application using learned concepts'
+        }
+      ]
+    };
+    setWorkshop(mockWorkshop);
+  }, [id]);
 
-    What you'll learn:
-    • Advanced React Hooks and Custom Hooks
-    • State Management with Context API and Redux Toolkit
-    • Performance Optimization Techniques
-    • Testing React Applications
-    • Deployment Strategies
-    
-    Prerequisites:
-    • Basic knowledge of React and JavaScript
-    • Familiarity with ES6+ features
-    • Understanding of HTML/CSS
-    
-    Materials Provided:
-    • Access to recorded sessions
-    • Code repository with examples
-    • Certificate of completion
-    • 1-month mentorship support`,
-    agenda: [
-      { day: "Day 1", topic: "Advanced Hooks & Patterns", duration: "8 hours" },
-      { day: "Day 2", topic: "State Management & Performance", duration: "8 hours" },
-      { day: "Day 3", topic: "Testing & Deployment", duration: "8 hours" }
-    ]
-  };
+  if (!workshop) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center">Loading...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-  const handleWorkshopRegistration = (workshopId: number, registrationData: any) => {
-    console.log('Registration data:', registrationData);
-    toast({
-      title: workshop.registrationMode === 'automated' ? "Registration Successful! 🎉" : "Request Submitted! 📋",
-      description: workshop.registrationMode === 'automated' 
-        ? "Workshop has been added to your dashboard!" 
-        : "Your registration request is pending approval.",
-    });
-    setShowRegistrationModal(false);
-  };
+  const availableSeats = workshop.seats - workshop.bookedSeats;
+  const discountPercentage = Math.round(((workshop.originalPrice - workshop.price) / workshop.originalPrice) * 100);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <div className="mb-6">
-          <Link to="/workshops">
-            <Button variant="outline" className="flex items-center space-x-2">
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Workshops</span>
-            </Button>
-          </Link>
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center text-sm text-gray-600 mb-6">
+          <span>Workshops</span>
+          <ChevronRight className="h-4 w-4 mx-2" />
+          <span>{workshop.category}</span>
+          <ChevronRight className="h-4 w-4 mx-2" />
+          <span className="text-gray-900">{workshop.title}</span>
         </div>
 
-        {/* Workshop Header */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-          <div className="relative">
-            <img 
-              src={workshop.image} 
-              alt={workshop.title}
-              className="w-full h-64 md:h-80 object-cover"
-            />
-            <div className="absolute top-6 left-6 flex gap-2">
-              {workshop.isFree ? (
-                <Badge className="bg-green-500 text-white border-0 text-lg px-4 py-2">FREE</Badge>
-              ) : (
-                <Badge className="bg-primary-500 text-white border-0 text-lg px-4 py-2">PAID</Badge>
-              )}
-              <Badge variant="secondary" className="bg-white/90 text-gray-700 text-lg px-4 py-2">
-                {workshop.mode}
-              </Badge>
-              <Badge variant={workshop.registrationMode === 'automated' ? 'default' : 'secondary'} className="text-lg px-4 py-2">
-                {workshop.registrationMode === 'automated' ? 'Instant' : 'Manual Approval'}
-              </Badge>
-            </div>
-            <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm rounded-xl p-3">
-              <div className="flex items-center space-x-2">
-                <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                <span className="text-lg font-semibold">{workshop.rating}</span>
-                <span className="text-gray-600">({workshop.reviews} reviews)</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-6">
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-2">
-                    {workshop.title}
-                  </h1>
-                  <p className="text-xl text-gray-600 font-medium">{workshop.company}</p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {workshop.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Calendar className="h-5 w-5" />
-                    <div>
-                      <div className="font-medium">{workshop.date}</div>
-                      <div>{workshop.time}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Clock className="h-5 w-5" />
-                    <div>
-                      <div className="font-medium">{workshop.duration}</div>
-                      <div>Duration</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Users className="h-5 w-5" />
-                    <div>
-                      <div className="font-medium">{workshop.seats - workshop.bookedSeats} left</div>
-                      <div>of {workshop.seats} seats</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Calendar className="h-5 w-5" />
-                    <div>
-                      <div className="font-medium">Deadline</div>
-                      <div>{workshop.registrationDeadline}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Registration Card */}
-              <div className="lg:col-span-1">
-                <Card className="border-0 shadow-xl sticky top-8">
-                  <CardContent className="p-6 space-y-4">
-                    <div className="text-center">
-                      {workshop.isFree ? (
-                        <div className="text-3xl font-bold text-green-600">FREE</div>
-                      ) : (
-                        <div>
-                          <div className="flex items-center justify-center space-x-1">
-                            <IndianRupee className="h-6 w-6 text-gray-900" />
-                            <span className="text-3xl font-bold text-gray-900">{workshop.price}</span>
-                          </div>
-                          {workshop.originalPrice && (
-                            <div className="text-lg text-gray-500 line-through">₹{workshop.originalPrice}</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Seats Available</span>
-                        <span className="font-medium">{workshop.seats - workshop.bookedSeats} of {workshop.seats}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-primary-500 to-accent-500 h-2 rounded-full" 
-                          style={{ width: `${(workshop.bookedSeats / workshop.seats) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {isAuthenticated ? (
-                      <Button 
-                        className="w-full bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 text-white py-3 text-lg font-semibold"
-                        onClick={() => {
-                          setSelectedWorkshop(workshop);
-                          setShowRegistrationModal(true);
-                        }}
-                        disabled={workshop.seats <= workshop.bookedSeats}
-                      >
-                        {workshop.seats <= workshop.bookedSeats ? 'Fully Booked' : 'Register Now'}
-                      </Button>
-                    ) : (
-                      <div className="space-y-3">
-                        <Link to="/login" className="block">
-                          <Button className="w-full bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 text-white py-3 text-lg font-semibold">
-                            Login to Register
-                          </Button>
-                        </Link>
-                        <p className="text-center text-sm text-gray-600">
-                          New to WorkshopWise?{' '}
-                          <Link to="/register" className="text-primary-600 hover:text-primary-500 font-medium">
-                            Create account
-                          </Link>
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="text-center text-xs text-gray-500 pt-2 border-t">
-                      Registration closes on {workshop.registrationDeadline}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Workshop Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            {/* Description */}
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-8">
-                <h2 className="text-2xl font-display font-bold text-gray-900 mb-4">
-                  About This Workshop
-                </h2>
-                <div className="prose prose-gray max-w-none">
-                  {workshop.description.split('\n').map((paragraph, index) => (
-                    <p key={index} className="text-gray-700 leading-relaxed mb-4">
-                      {paragraph}
-                    </p>
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Hero Section */}
+            <Card>
+              <div className="relative">
+                <img
+                  src={workshop.image}
+                  alt={workshop.title}
+                  className="w-full h-64 object-cover rounded-t-lg"
+                />
+                <div className="absolute top-4 left-4">
+                  <Badge className="bg-green-500">{workshop.mode}</Badge>
+                </div>
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsBookmarked(!isBookmarked)}
+                    className="bg-white"
+                  >
+                    <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-white">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                  <span>{workshop.company}</span>
+                  <span>•</span>
+                  <Badge variant="outline">{workshop.level}</Badge>
+                </div>
+                
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  {workshop.title}
+                </h1>
+                
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold">{workshop.rating}</span>
+                    <span className="text-gray-600">({workshop.reviews} reviews)</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <Users className="h-4 w-4" />
+                    <span>{workshop.bookedSeats} enrolled</span>
+                  </div>
+                </div>
+                
+                <p className="text-gray-700 leading-relaxed">
+                  {workshop.description}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Instructor */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Instructor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={workshop.instructorImage}
+                    alt={workshop.instructor}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-lg">{workshop.instructor}</h3>
+                    <p className="text-gray-600">Senior React Developer with 8+ years experience</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* What You'll Learn */}
+            <Card>
+              <CardHeader>
+                <CardTitle>What You'll Learn</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {workshop.highlights.map((highlight, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700">{highlight}</span>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
             {/* Agenda */}
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-8">
-                <h2 className="text-2xl font-display font-bold text-gray-900 mb-6">
-                  Workshop Agenda
-                </h2>
+            <Card>
+              <CardHeader>
+                <CardTitle>Workshop Agenda</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
                   {workshop.agenda.map((item, index) => (
-                    <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="bg-gradient-to-r from-primary-500 to-accent-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold">
-                        {index + 1}
+                    <div key={index} className="flex gap-4 pb-4 border-b border-gray-100 last:border-b-0">
+                      <div className="text-sm font-medium text-primary-600 min-w-24">
+                        {item.time}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{item.day}</h3>
-                        <p className="text-gray-600">{item.topic}</p>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {item.duration}
+                        <h4 className="font-semibold text-gray-900 mb-1">{item.topic}</h4>
+                        <p className="text-gray-600 text-sm">{item.description}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Instructor */}
-          <div className="lg:col-span-1">
-            <Card className="border-0 shadow-lg sticky top-8">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-display font-bold text-gray-900 mb-4">
-                  Your Instructor
-                </h2>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <img 
-                      src={workshop.instructor.avatar} 
-                      alt={workshop.instructor.name}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{workshop.instructor.name}</h3>
-                      <p className="text-gray-600 text-sm">{workshop.instructor.designation}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Building className="h-4 w-4" />
-                      <span>{workshop.instructor.company}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <User className="h-4 w-4" />
-                      <span>{workshop.instructor.experience} experience</span>
-                    </div>
-                  </div>
-                </div>
+            {/* Requirements */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Requirements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {workshop.requirements.map((requirement, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <span className="text-gray-700">{requirement}</span>
+                    </li>
+                  ))}
+                </ul>
               </CardContent>
             </Card>
           </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              <Card>
+                <CardContent className="p-6">
+                  {/* Pricing */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-3xl font-bold text-gray-900">
+                        ₹{workshop.price.toLocaleString()}
+                      </span>
+                      <span className="text-lg text-gray-500 line-through">
+                        ₹{workshop.originalPrice.toLocaleString()}
+                      </span>
+                      <Badge variant="destructive">{discountPercentage}% OFF</Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">Early bird pricing ends soon!</p>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  {/* Details */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{new Date(workshop.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{workshop.time}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{workshop.location}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Users className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">
+                        {availableSeats} seats available of {workshop.seats}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Registration Button */}
+                  <Button 
+                    className="w-full mb-4" 
+                    size="lg"
+                    disabled={availableSeats === 0}
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    {availableSeats > 0 ? 'Register Now' : 'Fully Booked'}
+                  </Button>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    30-day money-back guarantee
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
-
-      <WorkshopRegistrationModal
-        workshop={selectedWorkshop}
-        isOpen={showRegistrationModal}
-        onClose={() => setShowRegistrationModal(false)}
-        onRegister={handleWorkshopRegistration}
-      />
 
       <Footer />
     </div>
